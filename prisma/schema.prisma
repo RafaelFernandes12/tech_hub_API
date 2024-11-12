@@ -3,7 +3,6 @@
 
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,20 +13,47 @@ datasource db {
 }
 
 model product {
-    id           Int      @id @default(autoincrement())
-    qtd          Int
-    name         String
-    category     String
-    manufacturer String
-    sells        sells[]
+  id           Int           @id @default(autoincrement())
+  qtd          Int
+  price        Int
+  name         String
+  category     Category
+  manufacturer Manufacturer
+  sells        sells[]
 }
 
 model sells {
   id           Int      @id @default(autoincrement())
   date         DateTime
   qtd          Int
+  profit       Float
   totalValue   Float 
   product      product  @relation(fields: [productId], references: [id])
   productId    Int
 }
 
+enum Category {
+  ELECTRONICS
+  FURNITURE
+  CLOTHING
+  FOOD
+  BEAUTY
+  TOYS
+  SPORTS
+  AUTOMOTIVE
+  BOOKS
+  MUSIC
+}
+
+enum Manufacturer {
+  SONY
+  SAMSUNG
+  APPLE
+  LG
+  NIKE
+  ADIDAS
+  TOYOTA
+  HONDA
+  PUMA
+  LOREAL
+}

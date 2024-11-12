@@ -1,3 +1,4 @@
+import cors from '@fastify/cors'
 import { fastify } from "fastify"
 import { products } from "./routes/products"
 import { sells } from "./routes/sells"
@@ -6,6 +7,9 @@ const port = 3333
 
 app.register(products)
 app.register(sells)
+app.register(cors, {
+  origin: 'http://localhost:5173',
+})
 
 app.listen({
   port
