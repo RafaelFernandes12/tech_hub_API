@@ -6,28 +6,67 @@ import { sellsFilterSchema, sellsPostSchema, sellsProps } from '../schemas/sells
 
 export async function sells(app: FastifyInstance) {
 
-    app.get('/sells/page/:n', async (req) => {
+  app.get('/sells/page/:n', async (req) => {
 
-        const { startDate, productId, totalValue } = sellsFilterSchema.parse(req.query)
-        const { n } = pageParamSchema.parse(req.params)
-        return await prisma.sells.findMany({
-          where: {
-            AND: [
-              startDate ? {
-                date: {
-                  gte: new Date(startDate),
-                  lte: new Date(),
-                },
-              } : {},
-              productId ? {productId: parseInt(productId)} : {},
-              totalValue ? { totalValue: { gte: totalValue } } : {},
-            ],
-          },
-            skip: (parseInt(n) - 1) * 20,
-            take: 20,
+    const { startDate, productName, totalValue } = sellsFilterSchema.parse(req.query);
+    const { n } = pageParamSchema.parse(req.params);
 
-        })
+    let productId;
+    if (productName) {
+      const product = await prisma.product.findUnique({
+        where: { name: decodeURIComponent(productName) },
+        select: { id: true }
+      });
+
+      if (product) {
+        productId = product.id;
+      } else {
+        return [];
+      }
+    }
+
+    return await prisma.sells.findMany({
+      where: {
+        AND: [
+          startDate ? {
+            date: {
+              gte: new Date(startDate),
+              lte: new Date(),
+            },
+          } : {},
+          productId ? { productId } : {},
+          totalValue ? { totalValue: { gte: parseInt(totalValue) } } : {},
+        ],
+      },
+      skip: (parseInt(n) - 1) * 20,
+      take: 20,
+    });
+});
+
+
+    app.get('/findAllSells', async (req) => {
+
+      
+      const { startDate, productId, totalValue } = sellsFilterSchema.parse(req.query)
+
+
+
+      return await prisma.sells.findMany({
+        where: {
+          AND: [
+            startDate ? {
+              date: {
+                gte: new Date(startDate),
+                lte: new Date(),
+              },
+            } : {},
+            productId ? {productId: parseInt(productId)} : {},
+            totalValue ? { totalValue: { gte: totalValue } } : {},
+          ],
+        }
+      })
     })
+
 
     app.post('/sells', async (req, res) => {
       const { date = new Date(), productId, profit, qtd } = sellsPostSchema.parse(req.body);
@@ -37,10 +76,8 @@ export async function sells(app: FastifyInstance) {
       });
     
       if (!product) return res.status(404).send({ message: "Product not found" });
-      
     
       if (product.qtd < qtd) return res.status(400).send({ message: "Insufficient product quantity" });
-      
     
       const parsedProfit = profit / 100;
       const totalValue = qtd * parsedProfit * product.price;

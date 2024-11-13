@@ -16,7 +16,7 @@ model product {
   id           Int           @id @default(autoincrement())
   qtd          Int
   price        Int
-  name         String
+  name         String        @unique 
   category     Category
   manufacturer Manufacturer
   sells        sells[]

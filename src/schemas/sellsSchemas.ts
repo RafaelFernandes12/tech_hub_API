@@ -2,8 +2,8 @@ import { z } from "zod";
 
 export const sellsFilterSchema = z.object({
     startDate: z.string().optional(),
-    productId: z.string().optional(),
-    totalValue: z.number().optional(),
+    productName: z.string().optional(),
+    totalValue: z.string().optional(),
 });
 export const sellsPostSchema = z.object({
     date: z.date().optional(),
