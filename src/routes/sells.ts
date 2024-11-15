@@ -11,19 +11,20 @@ export async function sells(app: FastifyInstance) {
     const { startDate, productName, totalValue, price, qtd } = sellsFilterSchema.parse(req.query);
     const { n } = pageParamSchema.parse(req.params);
 
-    let productId;
-    if (productName) {
-      const product = await prisma.product.findUnique({
-        where: { name: decodeURIComponent(productName) },
-        select: { id: true }
-      });
+    let productIds: number[] | undefined;
 
-      if (product) {
-        productId = product.id;
-      } else {
-        return [];
-      }
+  if (productName) {
+    const products = await prisma.product.findMany({
+      where: { name: { contains: decodeURIComponent(productName) } },
+      select: { id: true, name: true }
+    });
+
+    if (products.length > 0) {
+      productIds = products.map(product => product.id);
+    } else {
+      return [];
     }
+  }
 
     return await prisma.sells.findMany({
       where: {
@@ -34,7 +35,7 @@ export async function sells(app: FastifyInstance) {
               lte: new Date(),
             },
           } : {},
-          productId ? { productId } : {},
+          productIds ? { productId: { in: productIds } } : {},
           totalValue ? { totalValue: { gte: parseInt(totalValue) } } : {},
           price ? { price: { gte: parseInt(price) } } : {},
           qtd ? { qtd: { gte: parseInt(qtd) } } : {},
@@ -46,41 +47,43 @@ export async function sells(app: FastifyInstance) {
 });
 
 
-    app.get('/findAllSells', async (req) => {
+app.get('/findAllSells', async (req) => {
+  const { startDate, productName, totalValue, price, qtd } = sellsFilterSchema.parse(req.query);
 
-      const { startDate, productName, totalValue, price, qtd } = sellsFilterSchema.parse(req.query);
+  let productIds: number[] | undefined;
 
-      let productId;
-      if (productName) {
-        const product = await prisma.product.findUnique({
-          where: { name: decodeURIComponent(productName) },
-          select: { id: true }
-        });
+  if (productName) {
+    const products = await prisma.product.findMany({
+      where: { name: { contains: decodeURIComponent(productName) } },
+      select: { id: true, name: true }
+    });
 
-        if (product) {
-          productId = product.id;
-        } else {
-          return [];
-        }
-      }
+    if (products.length > 0) {
+      productIds = products.map(product => product.id);
+    } else {
+      return [];
+    }
+  }
 
-      return await prisma.sells.findMany({
-        where: {
-          AND: [
-            startDate ? {
+  return await prisma.sells.findMany({
+    where: {
+      AND: [
+        startDate
+          ? {
               date: {
                 gte: new Date(startDate),
                 lte: new Date(),
               },
-            } : {},
-            productId ? { productId } : {},
-            totalValue ? { totalValue: { gte: parseInt(totalValue) } } : {},
-            price ? { price: { gte: parseInt(price) } } : {},
-            qtd ? { qtd: { gte: parseInt(qtd) } } : {},
-          ],
-        }
-      });
-    });
+            }
+          : {},
+        productIds ? { productId: { in: productIds } } : {},
+        totalValue ? { totalValue: { gte: parseInt(totalValue) } } : {},
+        price ? { price: { gte: parseInt(price) } } : {},
+        qtd ? { qtd: { gte: parseInt(qtd) } } : {},
+      ],
+    },
+  });
+});
 
     app.post('/sell10Products', async () => {
         const products = await prisma.product.findMany()

@@ -13,6 +13,9 @@ export const sellsPostSchema = z.object({
     price: z.number(),
     qtd: z.number(),
 })
+export const productIdSchema = z.object({
+    productId: z.string(),
+})
 export interface sellsProps {
     date: Date;
     qtd: number;
