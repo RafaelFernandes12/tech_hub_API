@@ -7,9 +7,7 @@ const port = 3333
 
 app.register(products)
 app.register(sells)
-app.register(cors, {
-  origin: 'http://localhost:5173',
-})
+app.register(cors)
 
 app.listen({
   port
